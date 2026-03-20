@@ -1,12 +1,12 @@
 import express from "express";
+import { githubWebhookHandler } from "./routes/github-webhook";
 
 const app = express();
-const PORT = Number(process.env.PORT) || 3001;
 
-app.get("/", (_req, res) => {
-  res.json({ ok: true, service: "server" });
-});
+app.use(express.json());
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+app.post("/webhook/github", githubWebhookHandler);
+
+app.listen(3001, () => {
+  console.log("Server running on http://localhost:3001");
 });
