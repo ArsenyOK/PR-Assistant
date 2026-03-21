@@ -1,4 +1,6 @@
 import express from "express";
+import { getInstallationToken } from "./github/installation";
+import { getPullRequestFiles } from "./github/pulls-files";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -9,22 +11,18 @@ app.get("/", (_req, res) => {
   res.json({ ok: true, service: "server" });
 });
 
-app.post("/webhook/github", (req, res) => {
+app.post("/webhook/github", async (req, res) => {
   const event = req.headers["x-github-event"];
   const action = req.body.action;
+  const prNumber = req.body.pull_request?.number;
+  const repository = req.body.repository?.full_name;
+  const installationId = req.body.installation?.id;
   const state = req.body.pull_request?.state;
 
-  if (event === "pull_request") {
-    const action = req.body.action;
-    const prNumber = req.body.pull_request?.number;
-    const repository = req.body.repository?.full_name;
-    const installationId = req.body.installation?.id;
-
-    console.log("PR Action:", action);
-    console.log("repository:", repository);
-    console.log("PR Number:", prNumber);
-    console.log("Installation ID:", installationId);
-  }
+  console.log("Webhook received");
+  console.log("Event:", event);
+  console.log("Action:", action);
+  console.log("State:", state);
 
   const shouldReview =
     event === "pull_request" &&
@@ -33,7 +31,23 @@ app.post("/webhook/github", (req, res) => {
 
   if (shouldReview) {
     console.log("Run PR analysis");
+    console.log("Repository:", repository);
+    console.log("PR Number:", prNumber);
+    console.log("Installation ID:", installationId);
+
+    const token = await getInstallationToken(installationId);
+    console.log("Installation token received:", token.slice(0, 10));
+
+    const files = await getPullRequestFiles(repository, prNumber, token);
+
+    console.log(
+      "PR Files:",
+      files.map((f: any) => f.filename),
+    );
+  } else {
+    console.log("Skip event");
   }
+
   res.status(200).send("ok");
 });
 
