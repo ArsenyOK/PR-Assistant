@@ -18,11 +18,11 @@ app.post("/webhook/github", (req, res) => {
   if (event === "pull_request") {
     const action = req.body.action;
     const prNumber = req.body.pull_request?.number;
-    const repo = req.body.repository?.full_name;
+    const repository = req.body.repository?.full_name;
     const installationId = req.body.installation?.id;
 
     console.log("PR Action:", action);
-    console.log("Repo:", repo);
+    console.log("repository:", repository);
     console.log("PR Number:", prNumber);
     console.log("Installation ID:", installationId);
   }
