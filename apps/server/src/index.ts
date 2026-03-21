@@ -12,43 +12,48 @@ app.get("/", (_req, res) => {
 });
 
 app.post("/webhook/github", async (req, res) => {
-  const event = req.headers["x-github-event"];
-  const action = req.body.action;
-  const prNumber = req.body.pull_request?.number;
-  const repository = req.body.repository?.full_name;
-  const installationId = req.body.installation?.id;
-  const state = req.body.pull_request?.state;
+  try {
+    const event = req.headers["x-github-event"];
+    const action = req.body.action;
+    const prNumber = req.body.pull_request?.number;
+    const repository = req.body.repository?.full_name;
+    const installationId = req.body.installation?.id;
+    const state = req.body.pull_request?.state;
 
-  console.log("Webhook received");
-  console.log("Event:", event);
-  console.log("Action:", action);
-  console.log("State:", state);
+    console.log("Webhook received");
+    console.log("Event:", event);
+    console.log("Action:", action);
+    console.log("State:", state);
 
-  const shouldReview =
-    event === "pull_request" &&
-    ["opened", "synchronize", "reopened"].includes(action) &&
-    state === "open";
+    const shouldReview =
+      event === "pull_request" &&
+      ["opened", "synchronize", "reopened"].includes(action) &&
+      state === "open";
 
-  if (shouldReview) {
-    console.log("Run PR analysis");
-    console.log("Repository:", repository);
-    console.log("PR Number:", prNumber);
-    console.log("Installation ID:", installationId);
+    if (shouldReview) {
+      console.log("Run PR analysis");
+      console.log("Repository:", repository);
+      console.log("PR Number:", prNumber);
+      console.log("Installation ID:", installationId);
 
-    const token = await getInstallationToken(installationId);
-    console.log("Installation token received:", token.slice(0, 10));
+      const token = await getInstallationToken(installationId);
+      console.log("Installation token received:", token.slice(0, 10));
 
-    const files = await getPullRequestFiles(repository, prNumber, token);
+      const files = await getPullRequestFiles(repository, prNumber, token);
 
-    console.log(
-      "PR Files:",
-      files.map((f: any) => f.filename),
-    );
-  } else {
-    console.log("Skip event");
+      console.log(
+        "PR Files:",
+        files.map((f: any) => f.filename),
+      );
+    } else {
+      console.log("Skip event");
+    }
+
+    res.status(200).send("ok");
+  } catch (error) {
+    console.error("Webhook processing failed:", error);
+    res.status(500).send("Webhook processing failed");
   }
-
-  res.status(200).send("ok");
 });
 
 app.listen(PORT, () => {

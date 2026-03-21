@@ -10,10 +10,23 @@ export async function getInstallationToken(installationId: number) {
       headers: {
         Authorization: `Bearer ${jwtToken}`,
         Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
       },
-    }
+    },
   );
 
-  const data = await response.json();
-  return data.token;
+  const text = await response.text();
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to get installation token: ${response.status} ${response.statusText}\n${text}`,
+    );
+  }
+
+  if (!text) {
+    throw new Error("Empty response body while getting installation token");
+  }
+
+  const data = JSON.parse(text);
+  return data.token as string;
 }
