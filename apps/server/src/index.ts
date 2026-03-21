@@ -10,8 +10,23 @@ app.get("/", (_req, res) => {
 });
 
 app.post("/webhook/github", (req, res) => {
+  const event = req.headers["x-github-event"];
+
   console.log("Webhook received");
-  console.log("Event:", req.headers["x-github-event"]);
+  console.log("Event:", event);
+
+  if (event === "pull_request") {
+    const action = req.body.action;
+    const prNumber = req.body.pull_request?.number;
+    const repo = req.body.repository?.full_name;
+    const installationId = req.body.installation?.id;
+
+    console.log("PR Action:", action);
+    console.log("Repo:", repo);
+    console.log("PR Number:", prNumber);
+    console.log("Installation ID:", installationId);
+  }
+
   res.status(200).send("ok");
 });
 
