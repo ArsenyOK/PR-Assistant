@@ -1,6 +1,6 @@
 import { generateAppJwt } from "./auth";
 
-export async function getInstallationToken(installationId: number) {
+export const getInstallationToken = async (installationId: number) => {
   const jwtToken = generateAppJwt();
 
   const response = await fetch(
@@ -29,4 +29,4 @@ export async function getInstallationToken(installationId: number) {
 
   const data = JSON.parse(text);
   return data.token as string;
-}
+};

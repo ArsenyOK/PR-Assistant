@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import jwt from "jsonwebtoken";
 
-export function generateAppJwt() {
+export const generateAppJwt = () => {
   const appId = process.env.GITHUB_APP_ID;
   const privateKeyPath = process.env.GITHUB_PRIVATE_KEY_PATH;
 
@@ -24,4 +24,4 @@ export function generateAppJwt() {
   };
 
   return jwt.sign(payload, privateKey, { algorithm: "RS256" });
-}
+};

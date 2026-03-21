@@ -47,10 +47,10 @@ app.post("/webhook/github", async (req, res) => {
         files.map((f: any) => f.filename),
       );
 
-      const diff = buildDiffFromFiles(files);
+      // const diff = buildDiffFromFiles(files);
 
-      console.log("DIFF:");
-      console.log(diff);
+      // console.log("DIFF:");
+      // console.log(diff);
     } else {
       console.log("Skip event");
     }

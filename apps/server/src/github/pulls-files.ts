@@ -1,8 +1,8 @@
-export async function getPullRequestFiles(
+export const getPullRequestFiles = async (
   repository: string,
   prNumber: number,
   token: string,
-) {
+) => {
   const response = await fetch(
     `https://api.github.com/repos/${repository}/pulls/${prNumber}/files`,
     {
@@ -28,7 +28,7 @@ export async function getPullRequestFiles(
   }
 
   return JSON.parse(text);
-}
+};
 
 export function buildDiffFromFiles(files: any[]) {
   let diff = "";
