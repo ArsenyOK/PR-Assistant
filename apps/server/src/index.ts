@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import { getInstallationToken } from "./github/installation";
-import { getPullRequestFiles } from "./github/pulls-files";
+import { buildDiffFromFiles, getPullRequestFiles } from "./github/pulls-files";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -46,6 +46,11 @@ app.post("/webhook/github", async (req, res) => {
         "PR Files:",
         files.map((f: any) => f.filename),
       );
+
+      const diff = buildDiffFromFiles(files);
+
+      console.log("DIFF:");
+      console.log(diff);
     } else {
       console.log("Skip event");
     }

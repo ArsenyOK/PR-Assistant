@@ -29,3 +29,17 @@ export async function getPullRequestFiles(
 
   return JSON.parse(text);
 }
+
+export function buildDiffFromFiles(files: any[]) {
+  let diff = "";
+
+  for (const file of files) {
+    if (!file.patch) continue;
+
+    diff += `\nFile: ${file.filename}\n`;
+    diff += file.patch;
+    diff += "\n\n";
+  }
+
+  return diff;
+}
