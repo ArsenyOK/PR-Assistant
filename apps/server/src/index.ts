@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import { getInstallationToken } from "./github/installation";
 import { buildDiffFromFiles, getPullRequestFiles } from "./github/pulls-files";
+import { generateReview } from "./services/pr-review.service";
+import { addPullRequestComment } from "./github/comments";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -32,25 +34,15 @@ app.post("/webhook/github", async (req, res) => {
       state === "open";
 
     if (shouldReview) {
-      console.log("Run PR analysis");
-      console.log("Repository:", repository);
-      console.log("PR Number:", prNumber);
-      console.log("Installation ID:", installationId);
-
       const token = await getInstallationToken(installationId);
-      console.log("Installation token received:", token.slice(0, 10));
 
       const files = await getPullRequestFiles(repository, prNumber, token);
 
-      console.log(
-        "PR Files:",
-        files.map((f: any) => f.filename),
-      );
+      const diff = buildDiffFromFiles(files);
 
-      // const diff = buildDiffFromFiles(files);
+      const review = await generateReview(diff);
 
-      // console.log("DIFF:");
-      // console.log(diff);
+      await addPullRequestComment(repository, prNumber, token, review);
     } else {
       console.log("Skip event");
     }
