@@ -11,9 +11,8 @@ app.get("/", (_req, res) => {
 
 app.post("/webhook/github", (req, res) => {
   const event = req.headers["x-github-event"];
-
-  console.log("Webhook received");
-  console.log("Event:", event);
+  const action = req.body.action;
+  const state = req.body.pull_request?.state;
 
   if (event === "pull_request") {
     const action = req.body.action;
@@ -27,6 +26,14 @@ app.post("/webhook/github", (req, res) => {
     console.log("Installation ID:", installationId);
   }
 
+  const shouldReview =
+    event === "pull_request" &&
+    ["opened", "synchronize", "reopened"].includes(action) &&
+    state === "open";
+
+  if (shouldReview) {
+    console.log("Run PR analysis");
+  }
   res.status(200).send("ok");
 });
 
