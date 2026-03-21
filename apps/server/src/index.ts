@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import { getInstallationToken } from "./github/installation";
 import { getPullRequestFiles } from "./github/pulls-files";
