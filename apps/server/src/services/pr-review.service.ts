@@ -1,18 +1,57 @@
+import { openai } from "../lib/openai";
+
 export async function generateReview(diff: string): Promise<string> {
-  return `
+  const model = process.env.OPENAI_MODEL || "gpt-5.4-mini";
+
+  if (!diff.trim()) {
+    return `
 ## 🤖 PR Review
 
 ### Summary
-Looks good overall, but consider the following improvements:
+No review generated because there was no supported diff content after filtering.
+
+### Potential issues
+- No actionable code diff found.
 
 ### Suggestions
-- Add error handling in services
-- Move GitHub logic to separate module
-- Consider using environment validation
+- Try /review after changing source files instead of generated or ignored files.
+`.trim();
+  }
 
-### Files changed
-Review based on diff analysis.
+  const prompt = `
+You are a senior TypeScript backend engineer reviewing a GitHub pull request.
+
+Review the diff and produce markdown with exactly these sections:
+
+## 🤖 PR Review
+
+### Summary
+- Short summary of what changed
+
+### Potential issues
+- Bullet list
+- If none, write: "- No obvious issues found."
+
+### Suggestions
+- Bullet list
+- If none, write: "- No concrete suggestions."
+
+Constraints:
+- Be concise
+- Only mention issues supported by the diff
+- Focus on bugs, maintainability, typing, architecture, and reliability
+- Do not mention files that are not present in the diff
+
+Diff:
+${diff}
 `;
+
+  const response = await openai.responses.create({
+    model,
+    input: prompt,
+  });
+
+  return response.output_text?.trim() || "No review generated.";
 }
 
 export function buildReviewPrompt(diff: string) {
