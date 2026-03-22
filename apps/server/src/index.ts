@@ -1,9 +1,20 @@
 import "dotenv/config";
 import express from "express";
 import { getInstallationToken } from "./github/installation";
-import { buildDiffFromFiles, getPullRequestFiles } from "./github/pulls-files";
+import { getPullRequestFiles } from "./github/pulls-files";
 import { generateReview } from "./services/pr-review.service";
-import { createOrUpdatePRReview } from "./github/comments";
+import {
+  addPullRequestComment,
+  createOrUpdatePRReview,
+} from "./github/comments";
+import {
+  buildDiffFromFiles,
+  prepareFilesForReview,
+} from "./services/diff-builder.service";
+import {
+  getHelpComment,
+  parseCommentCommand,
+} from "./services/comment-command.service";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -17,40 +28,110 @@ app.get("/", (_req, res) => {
 app.post("/webhook/github", async (req, res) => {
   try {
     const event = req.headers["x-github-event"];
-    const action = req.body.action;
-    const prNumber = req.body.pull_request?.number;
-    const repository = req.body.repository?.full_name;
-    const installationId = req.body.installation?.id;
-    const state = req.body.pull_request?.state;
 
-    console.log("Webhook received");
-    console.log("Event:", event);
-    console.log("Action:", action);
-    console.log("State:", state);
+    if (event === "issue_comment") {
+      const action = req.body.action;
+      const isPullRequestComment = Boolean(req.body.issue?.pull_request);
 
-    const shouldReview =
-      event === "pull_request" &&
-      ["opened", "synchronize", "reopened"].includes(action) &&
-      state === "open";
+      if (action !== "created" || !isPullRequestComment) {
+        return res.status(200).send("ok");
+      }
 
-    if (shouldReview) {
+      const commentBody = req.body.comment?.body ?? "";
+      const command = parseCommentCommand(commentBody);
+
+      if (!command) {
+        return res.status(200).send("ok");
+      }
+
+      const repository = req.body.repository?.full_name;
+      const prNumber = req.body.issue?.number;
+      const installationId = req.body.installation?.id;
+
       const token = await getInstallationToken(installationId);
 
-      const files = await getPullRequestFiles(repository, prNumber, token);
+      if (command === "/help") {
+        await addPullRequestComment(
+          repository,
+          prNumber,
+          token,
+          getHelpComment(),
+        );
+        return res.status(200).send("ok");
+      }
 
-      const diff = buildDiffFromFiles(files);
+      if (command === "/summary") {
+        const files = await getPullRequestFiles(repository, prNumber, token);
+        const { includedFiles } = prepareFilesForReview(files);
+        const { diff } = buildDiffFromFiles(includedFiles);
 
-      const review = await generateReview(diff);
+        const summary = `## PR Summary\n\nDiff length: ${diff.length}\nFiles analyzed: ${includedFiles.length}`;
+        await addPullRequestComment(repository, prNumber, token, summary);
 
-      await createOrUpdatePRReview(repository, prNumber, token, review);
-    } else {
-      console.log("Skip event");
+        return res.status(200).send("ok");
+      }
+
+      if (command === "/review") {
+        const files = await getPullRequestFiles(repository, prNumber, token);
+
+        const { includedFiles, ignoredFiles } = prepareFilesForReview(files);
+
+        const { diff, usedFiles, truncatedFilesCount } =
+          buildDiffFromFiles(includedFiles);
+
+        console.log("Included files:", usedFiles);
+        console.log("Ignored files:", ignoredFiles);
+        console.log("Truncated files count:", truncatedFilesCount);
+        console.log("Final diff length:", diff.length);
+
+        const review = await generateReview(diff);
+
+        await createOrUpdatePRReview(repository, prNumber, token, review);
+
+        return res.status(200).send("ok");
+      }
     }
 
-    res.status(200).send("ok");
+    if (event === "pull_request") {
+      const action = req.body.action;
+      const prNumber = req.body.pull_request?.number;
+      const repository = req.body.repository?.full_name;
+      const installationId = req.body.installation?.id;
+      const state = req.body.pull_request?.state;
+
+      const shouldReview =
+        ["opened", "synchronize", "reopened"].includes(action) &&
+        state === "open";
+
+      if (shouldReview) {
+        const token = await getInstallationToken(installationId);
+
+        const files = await getPullRequestFiles(repository, prNumber, token);
+
+        const { includedFiles, ignoredFiles } = prepareFilesForReview(files);
+
+        const { diff, usedFiles, truncatedFilesCount } =
+          buildDiffFromFiles(includedFiles);
+
+        console.log("Included files:", usedFiles);
+        console.log("Ignored files:", ignoredFiles);
+        console.log("Truncated files count:", truncatedFilesCount);
+        console.log("Final diff length:", diff.length);
+
+        const review = await generateReview(diff);
+
+        await createOrUpdatePRReview(repository, prNumber, token, review);
+      } else {
+        console.log("Skip event");
+      }
+
+      return res.status(200).send("ok");
+    }
+
+    return res.status(200).send("ok");
   } catch (error) {
     console.error("Webhook processing failed:", error);
-    res.status(500).send("Webhook processing failed");
+    return res.status(500).send("Webhook processing failed");
   }
 });
 

@@ -1,3 +1,12 @@
+export type PullRequestFile = {
+  filename: string;
+  status: string;
+  additions: number;
+  deletions: number;
+  changes: number;
+  patch?: string;
+};
+
 export const getPullRequestFiles = async (
   repository: string,
   prNumber: number,
