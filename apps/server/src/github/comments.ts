@@ -85,10 +85,10 @@ export async function createOrUpdatePRReview(
   const body = `${marker}\n${review}`;
 
   if (existingComment) {
-    console.log("Updating existing review comment");
+    console.log("Updating existing review comment.");
     await updateComment(repository, existingComment.id, token, body);
   } else {
-    console.log("Creating new review comment");
+    console.log("Creating new review comment.");
     await addPullRequestComment(repository, prNumber, token, body);
   }
 }
