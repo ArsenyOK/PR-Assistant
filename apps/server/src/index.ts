@@ -2,7 +2,10 @@ import "dotenv/config";
 import express from "express";
 import { getInstallationToken } from "./github/installation";
 import { getPullRequestFiles } from "./github/pulls-files";
-import { generateReview } from "./services/pr-review.service";
+import {
+  buildReviewPrompt,
+  generateReview,
+} from "./services/pr-review.service";
 import {
   addPullRequestComment,
   createOrUpdatePRReview,
@@ -15,6 +18,7 @@ import {
   getHelpComment,
   parseCommentCommand,
 } from "./services/comment-command.service";
+import { addLabel } from "./utils/utils";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -30,6 +34,12 @@ app.post("/webhook/github", async (req, res) => {
     const event = req.headers["x-github-event"];
 
     if (event === "issue_comment") {
+      const authorType = req.body.comment?.user?.type;
+
+      if (authorType === "Bot") {
+        return res.status(200).send("ok");
+      }
+
       const action = req.body.action;
       const isPullRequestComment = Boolean(req.body.issue?.pull_request);
 
@@ -84,7 +94,10 @@ app.post("/webhook/github", async (req, res) => {
         console.log("Truncated files count:", truncatedFilesCount);
         console.log("Final diff length:", diff.length);
 
-        const review = await generateReview(diff);
+        const prompt = buildReviewPrompt(diff);
+        const review = await generateReview(prompt);
+
+        await addLabel(repository, prNumber, token, "ai-reviewed");
 
         await createOrUpdatePRReview(repository, prNumber, token, review);
 
@@ -118,7 +131,10 @@ app.post("/webhook/github", async (req, res) => {
         console.log("Truncated files count:", truncatedFilesCount);
         console.log("Final diff length:", diff.length);
 
-        const review = await generateReview(diff);
+        const prompt = buildReviewPrompt(diff);
+        const review = await generateReview(prompt);
+
+        await addLabel(repository, prNumber, token, "ai-reviewed");
 
         await createOrUpdatePRReview(repository, prNumber, token, review);
       } else {
