@@ -3,7 +3,7 @@ import express from "express";
 import { getInstallationToken } from "./github/installation";
 import { buildDiffFromFiles, getPullRequestFiles } from "./github/pulls-files";
 import { generateReview } from "./services/pr-review.service";
-import { addPullRequestComment } from "./github/comments";
+import { createOrUpdatePRReview } from "./github/comments";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -42,7 +42,7 @@ app.post("/webhook/github", async (req, res) => {
 
       const review = await generateReview(diff);
 
-      await addPullRequestComment(repository, prNumber, token, review);
+      await createOrUpdatePRReview(repository, prNumber, token, review);
     } else {
       console.log("Skip event");
     }
