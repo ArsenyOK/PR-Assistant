@@ -17,9 +17,11 @@ export const generateAppJwt = () => {
   const resolvedPath = path.resolve(process.cwd(), privateKeyPath);
   const privateKey = fs.readFileSync(resolvedPath, "utf-8");
 
+  const now = Math.floor(Date.now() / 1000);
+
   const payload = {
-    iat: Math.floor(Date.now() / 1000) - 60,
-    exp: Math.floor(Date.now() / 1000) + 10 * 60,
+    iat: now - 60,
+    exp: now + 9 * 60,
     iss: appId,
   };
 
