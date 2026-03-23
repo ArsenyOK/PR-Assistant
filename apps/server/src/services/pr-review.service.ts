@@ -15,6 +15,8 @@ export async function generateReview(prompt: string): Promise<string> {
 
   const output = response.output_text?.trim();
 
+  console.info(output, "output");
+
   if (!output) {
     return `
 ## 🤖 PR Review
