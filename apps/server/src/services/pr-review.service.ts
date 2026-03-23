@@ -1,50 +1,8 @@
 import { openai } from "../lib/openai";
+import { ReviewContext } from "../types";
 
-export async function generateReview(diff: string): Promise<string> {
+export async function generateReview(prompt: string): Promise<string> {
   const model = process.env.OPENAI_MODEL || "gpt-5.4-mini";
-
-  if (!diff.trim()) {
-    return `
-## 🤖 PR Review
-
-### Summary
-No review generated because there was no supported diff content after filtering.
-
-### Potential issues
-- No actionable code diff found.
-
-### Suggestions
-- Try /review after changing source files instead of generated or ignored files.
-`.trim();
-  }
-
-  const prompt = `
-You are a senior TypeScript backend engineer reviewing a GitHub pull request.
-
-Review the diff and produce markdown with exactly these sections:
-
-## 🤖 PR Review
-
-### Summary
-- Short summary of what changed
-
-### Potential issues
-- Bullet list
-- If none, write: "- No obvious issues found."
-
-### Suggestions
-- Bullet list
-- If none, write: "- No concrete suggestions."
-
-Constraints:
-- Be concise
-- Only mention issues supported by the diff
-- Focus on bugs, maintainability, typing, architecture, and reliability
-- Do not mention files that are not present in the diff
-
-Diff:
-${diff}
-`;
 
   const response = await openai.responses.create({
     model,
@@ -54,22 +12,86 @@ ${diff}
   return response.output_text?.trim() || "No review generated.";
 }
 
-export function buildReviewPrompt(diff: string) {
+export function buildReviewPrompt(context: ReviewContext): string {
+  const { diff, usedFiles, ignoredFiles, projectType, customRules } = context;
+
+  const projectSpecificFocus = {
+    frontend: `
+Focus especially on:
+- component structure
+- state management
+- hooks usage
+- rendering performance
+- UX regressions
+- prop typing and maintainability
+`,
+    backend: `
+Focus especially on:
+- architecture boundaries
+- service separation
+- validation
+- error handling
+- API reliability
+- security concerns
+- typing correctness
+`,
+    fullstack: `
+Focus especially on:
+- API-contract consistency
+- backend/frontend integration risks
+- data flow correctness
+- validation on both sides
+- maintainability across layers
+`,
+    unknown: `
+Focus on:
+- correctness
+- maintainability
+- typing
+- architecture
+- reliability
+`,
+  };
+
   return `
-You are a senior software engineer performing a code review.
+You are a senior TypeScript engineer doing a pull request review.
 
-Analyze the following pull request diff and provide:
+Project type: ${projectType}
 
-1. Summary of changes
-2. Potential bugs
-3. Code quality issues
-4. Performance issues
-5. Security issues
-6. Suggestions for improvement
+Files analyzed:
+${usedFiles.map((f) => `- ${f}`).join("\n")}
 
-Be concise and structured.
+Ignored files:
+${ignoredFiles.length ? ignoredFiles.map((f) => `- ${f}`).join("\n") : "- none"}
+
+Team code review rules:
+${customRules.map((r) => `- ${r}`).join("\n")}
+
+${projectSpecificFocus[projectType]}
+
+Return markdown with exactly these sections:
+
+## 🤖 PR Review
+
+### Summary
+- Brief summary of what changed
+
+### Potential issues
+- Bullet list
+- If none, write: "- No obvious issues found."
+
+### Suggestions
+- Bullet list
+- If none, write: "- No concrete suggestions."
+
+Rules for your review:
+- Only mention issues supported by the diff
+- Be specific and actionable
+- Do not invent files or issues
+- Prefer high-signal comments over many weak comments
+- Mention severity implicitly through wording, not labels
 
 Pull request diff:
 ${diff}
-`;
+`.trim();
 }

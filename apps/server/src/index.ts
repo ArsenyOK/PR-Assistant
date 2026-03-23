@@ -18,7 +18,7 @@ import {
   getHelpComment,
   parseCommentCommand,
 } from "./services/comment-command.service";
-import { addLabel } from "./utils/utils";
+import { addLabel, detectProjectType } from "./utils/utils";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -94,7 +94,21 @@ app.post("/webhook/github", async (req, res) => {
         console.log("Truncated files count:", truncatedFilesCount);
         console.log("Final diff length:", diff.length);
 
-        const prompt = buildReviewPrompt(diff);
+        const projectType = detectProjectType(usedFiles);
+
+        const prompt = buildReviewPrompt({
+          diff,
+          usedFiles,
+          ignoredFiles,
+          projectType,
+          customRules: [
+            "Avoid any in TypeScript unless there is a strong reason",
+            "Prefer explicit error handling for external API calls",
+            "Keep route handlers thin and move business logic to services",
+            "Frontend components should not contain heavy business logic",
+          ],
+        });
+
         const review = await generateReview(prompt);
 
         await addLabel(repository, prNumber, token, "ai-reviewed");

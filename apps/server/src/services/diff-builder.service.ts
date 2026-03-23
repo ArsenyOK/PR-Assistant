@@ -1,5 +1,5 @@
 import { REVIEW_CONFIG } from "../config/review.config";
-import { PullRequestFile } from "../github/pulls-files";
+import { PullRequestFile } from "../types";
 
 const IGNORED_FILE_NAMES = new Set([
   "package-lock.json",
