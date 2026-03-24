@@ -16,3 +16,4 @@ export type ReviewContext = {
 };
 
 export type SupportedCommand = "/ai-review" | "/summary" | "/help";
+export type RiskLevel = "low" | "medium" | "high" | null;
