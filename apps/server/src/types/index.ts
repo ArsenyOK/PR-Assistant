@@ -14,3 +14,5 @@ export type ReviewContext = {
   projectType: "frontend" | "backend" | "fullstack" | "unknown";
   customRules: string[];
 };
+
+export type SupportedCommand = "/ai-review" | "/summary" | "/help";
