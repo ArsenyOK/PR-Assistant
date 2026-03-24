@@ -100,6 +100,14 @@ ${customRules.map((r) => `- ${r}`).join("\n")}
 
 ${projectSpecificFocus[projectType]}
 
+When reviewing code:
+- Prefer pointing out real risks over style preferences
+- Do not suggest changes without explaining why
+- Avoid generic advice
+- If code is good, explicitly say that
+- Focus on correctness, architecture, and maintainability first
+- Style issues are lowest priority
+
 Return markdown with exactly these sections and headings:
 
 ## 🤖 PR Review
@@ -108,6 +116,9 @@ Return markdown with exactly these sections and headings:
 - 2 to 4 bullet points
 - Briefly describe what changed
 - Mention the main intent of the PR
+
+### Risk level
+- Must contain exactly one value: Low, Medium, or High
 
 ### Potential issues
 - List only meaningful issues supported by the diff
@@ -118,6 +129,7 @@ Return markdown with exactly these sections and headings:
 
 ### Suggestions
 - Provide concrete, actionable improvements
+- Explain why the suggestion is useful
 - Keep suggestions practical and relevant to the changed code
 - If there are no concrete suggestions, write exactly:
 - No concrete suggestions.

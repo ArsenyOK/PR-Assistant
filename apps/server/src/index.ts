@@ -16,9 +16,12 @@ import {
 } from "./services/diff-builder.service";
 import {
   getHelpComment,
+  getInitialPRComment,
   parseCommentCommand,
 } from "./services/comment-command.service";
 import { addLabel, detectProjectType } from "./utils/utils";
+import { addRiskLabel, removeRiskLabels } from "./github/label";
+import { parseRiskLevel } from "./services/review-parser.service";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -32,6 +35,19 @@ app.get("/", (_req, res) => {
 app.post("/webhook/github", async (req, res) => {
   try {
     const event = req.headers["x-github-event"];
+
+    const customRules = [
+      "Avoid any in TypeScript unless there is a strong reason",
+      "Prefer explicit error handling for external API calls",
+      "Keep route handlers thin and move business logic to services",
+      "Frontend components should not contain heavy business logic",
+      "Prefer pointing out real risks over style preferences",
+      "Do not suggest changes without explaining why",
+      "Avoid generic advice",
+      "If code is good, explicitly say that",
+      "Focus on correctness, architecture, and maintainability first",
+      "Style issues are lowest priority",
+    ];
 
     if (event === "issue_comment") {
       const authorType = req.body.comment?.user?.type;
@@ -67,6 +83,7 @@ app.post("/webhook/github", async (req, res) => {
           token,
           getHelpComment(),
         );
+
         return res.status(200).send("ok");
       }
 
@@ -75,13 +92,17 @@ app.post("/webhook/github", async (req, res) => {
         const { includedFiles } = prepareFilesForReview(files);
         const { diff } = buildDiffFromFiles(includedFiles);
 
-        const summary = `## PR Summary\n\nDiff length: ${diff.length}\nFiles analyzed: ${includedFiles.length}`;
+        const summary = `## PR Summary
+
+Diff length: ${diff.length}
+Files analyzed: ${includedFiles.length}`;
+
         await addPullRequestComment(repository, prNumber, token, summary);
 
         return res.status(200).send("ok");
       }
 
-      if (command === "/review") {
+      if (command === "/ai-review") {
         const files = await getPullRequestFiles(repository, prNumber, token);
 
         const { includedFiles, ignoredFiles } = prepareFilesForReview(files);
@@ -101,22 +122,25 @@ app.post("/webhook/github", async (req, res) => {
           usedFiles,
           ignoredFiles,
           projectType,
-          customRules: [
-            "Avoid any in TypeScript unless there is a strong reason",
-            "Prefer explicit error handling for external API calls",
-            "Keep route handlers thin and move business logic to services",
-            "Frontend components should not contain heavy business logic",
-          ],
+          customRules,
         });
 
         const review = await generateReview(prompt);
 
+        await createOrUpdatePRReview(repository, prNumber, token, review);
         await addLabel(repository, prNumber, token, "ai-reviewed");
 
-        await createOrUpdatePRReview(repository, prNumber, token, review);
+        const riskLevel = parseRiskLevel(review);
+
+        if (riskLevel) {
+          await removeRiskLabels(repository, prNumber, token);
+          await addRiskLabel(repository, prNumber, token, riskLevel);
+        }
 
         return res.status(200).send("ok");
       }
+
+      return res.status(200).send("ok");
     }
 
     if (event === "pull_request") {
@@ -126,45 +150,18 @@ app.post("/webhook/github", async (req, res) => {
       const installationId = req.body.installation?.id;
       const state = req.body.pull_request?.state;
 
-      const shouldReview =
-        ["opened", "synchronize", "reopened"].includes(action) &&
-        state === "open";
+      const shouldCreateInitialComment =
+        ["opened", "reopened"].includes(action) && state === "open";
 
-      if (shouldReview) {
+      if (shouldCreateInitialComment) {
         const token = await getInstallationToken(installationId);
 
-        const files = await getPullRequestFiles(repository, prNumber, token);
-
-        const { includedFiles, ignoredFiles } = prepareFilesForReview(files);
-
-        const { diff, usedFiles, truncatedFilesCount } =
-          buildDiffFromFiles(includedFiles);
-
-        console.log("Included files:", usedFiles);
-        console.log("Ignored files:", ignoredFiles);
-        console.log("Truncated files count:", truncatedFilesCount);
-        console.log("Final diff length:", diff.length);
-
-        const projectType = detectProjectType(usedFiles);
-
-        const prompt = buildReviewPrompt({
-          diff,
-          usedFiles,
-          ignoredFiles,
-          projectType,
-          customRules: [
-            "Avoid any in TypeScript unless there is a strong reason",
-            "Prefer explicit error handling for external API calls",
-            "Keep route handlers thin and move business logic to services",
-            "Frontend components should not contain heavy business logic",
-          ],
-        });
-
-        const review = await generateReview(prompt);
-
-        await addLabel(repository, prNumber, token, "ai-reviewed");
-
-        await createOrUpdatePRReview(repository, prNumber, token, review);
+        await addPullRequestComment(
+          repository,
+          prNumber,
+          token,
+          getInitialPRComment(),
+        );
       } else {
         console.log("Skip event");
       }
