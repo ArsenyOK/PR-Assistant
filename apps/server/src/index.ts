@@ -1,27 +1,15 @@
 import "dotenv/config";
 import express from "express";
 import { getInstallationToken } from "./github/installation";
-import { getPullRequestFiles } from "./github/pulls-files";
-import {
-  buildReviewPrompt,
-  generateReview,
-} from "./services/pr-review.service";
-import {
-  addPullRequestComment,
-  createOrUpdatePRReview,
-} from "./github/comments";
-import {
-  buildDiffFromFiles,
-  prepareFilesForReview,
-} from "./services/diff-builder.service";
+import { addPullRequestComment } from "./github/comments";
 import {
   getHelpComment,
   getInitialPRComment,
+  normalizeCommand,
   parseCommentCommand,
 } from "./services/comment-command.service";
-import { addLabel, detectProjectType } from "./utils/utils";
-import { addRiskLabel, removeRiskLabels } from "./github/label";
-import { parseRiskLevel } from "./services/review-parser.service";
+import { runPullRequestReview } from "./services/review-runner.service";
+import { CUSTOM_RULES } from "./utils/consts";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -36,22 +24,8 @@ app.post("/webhook/github", async (req, res) => {
   try {
     const event = req.headers["x-github-event"];
 
-    const customRules = [
-      "Avoid any in TypeScript unless there is a strong reason",
-      "Prefer explicit error handling for external API calls",
-      "Keep route handlers thin and move business logic to services",
-      "Frontend components should not contain heavy business logic",
-      "Prefer pointing out real risks over style preferences",
-      "Do not suggest changes without explaining why",
-      "Avoid generic advice",
-      "If code is good, explicitly say that",
-      "Focus on correctness, architecture, and maintainability first",
-      "Style issues are lowest priority",
-    ];
-
     if (event === "issue_comment") {
       const authorType = req.body.comment?.user?.type;
-
       if (authorType === "Bot") {
         return res.status(200).send("ok");
       }
@@ -64,11 +38,13 @@ app.post("/webhook/github", async (req, res) => {
       }
 
       const commentBody = req.body.comment?.body ?? "";
-      const command = parseCommentCommand(commentBody);
+      const rawCommand = parseCommentCommand(commentBody ?? null);
 
-      if (!command) {
+      if (!rawCommand) {
         return res.status(200).send("ok");
       }
+
+      const command = normalizeCommand(rawCommand);
 
       const repository = req.body.repository?.full_name;
       const prNumber = req.body.issue?.number;
@@ -87,55 +63,20 @@ app.post("/webhook/github", async (req, res) => {
         return res.status(200).send("ok");
       }
 
-      if (command === "/summary") {
-        const files = await getPullRequestFiles(repository, prNumber, token);
-        const { includedFiles } = prepareFilesForReview(files);
-        const { diff } = buildDiffFromFiles(includedFiles);
-
-        const summary = `## PR Summary
-
-Diff length: ${diff.length}
-Files analyzed: ${includedFiles.length}`;
-
-        await addPullRequestComment(repository, prNumber, token, summary);
-
-        return res.status(200).send("ok");
-      }
-
       if (command === "/ai-review") {
-        const files = await getPullRequestFiles(repository, prNumber, token);
-
-        const { includedFiles, ignoredFiles } = prepareFilesForReview(files);
-
-        const { diff, usedFiles, truncatedFilesCount } =
-          buildDiffFromFiles(includedFiles);
-
-        console.log("Included files:", usedFiles);
-        console.log("Ignored files:", ignoredFiles);
-        console.log("Truncated files count:", truncatedFilesCount);
-        console.log("Final diff length:", diff.length);
-
-        const projectType = detectProjectType(usedFiles);
-
-        const prompt = buildReviewPrompt({
-          diff,
-          usedFiles,
-          ignoredFiles,
-          projectType,
-          customRules,
+        const result = await runPullRequestReview({
+          repository,
+          prNumber,
+          installationId,
+          customRules: CUSTOM_RULES,
         });
 
-        const review = await generateReview(prompt);
-
-        await createOrUpdatePRReview(repository, prNumber, token, review);
-        await addLabel(repository, prNumber, token, "ai-reviewed");
-
-        const riskLevel = parseRiskLevel(review);
-
-        if (riskLevel) {
-          await removeRiskLabels(repository, prNumber, token);
-          await addRiskLabel(repository, prNumber, token, riskLevel);
-        }
+        console.log("Included files:", result.usedFiles);
+        console.log("Ignored files:", result.ignoredFiles);
+        console.log("Truncated files count:", result.truncatedFilesCount);
+        console.log("Final diff length:", result.diff.length);
+        console.log("Project type:", result.projectType);
+        console.log("Risk level:", result.riskLevel);
 
         return res.status(200).send("ok");
       }
@@ -162,8 +103,6 @@ Files analyzed: ${includedFiles.length}`;
           token,
           getInitialPRComment(),
         );
-      } else {
-        console.log("Skip event");
       }
 
       return res.status(200).send("ok");

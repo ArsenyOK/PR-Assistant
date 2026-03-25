@@ -15,5 +15,13 @@ export type ReviewContext = {
   customRules: string[];
 };
 
-export type SupportedCommand = "/ai-review" | "/summary" | "/help";
+export type ReviewStatsInput = {
+  filesAnalyzed: number;
+  filesIgnored: number;
+  diffLength: number;
+  truncatedFilesCount: number;
+  projectType: string;
+};
+
+export type SupportedCommand = "/review" | "/ai-review" | "/summary" | "/help";
 export type RiskLevel = "low" | "medium" | "high" | null;

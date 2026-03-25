@@ -1,0 +1,11 @@
+{
+  "ignore": ["dist/", "build/", "pnpm-lock.yaml", "package-lock.json"],
+  "maxFiles": 15,
+  "maxTotalDiffChars": 15000,
+  "maxPatchCharsPerFile": 3000,
+  "rules": [
+    "Avoid any in TypeScript unless necessary",
+    "Keep route handlers thin and move business logic to services",
+    "Frontend components should not contain heavy business logic"
+  ]
+}

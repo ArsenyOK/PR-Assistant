@@ -7,6 +7,10 @@ export function parseCommentCommand(body: string): SupportedCommand | null {
     return "/ai-review";
   }
 
+  if (normalizedBody.startsWith("/review")) {
+    return "/review";
+  }
+
   if (normalizedBody.startsWith("/summary")) {
     return "/summary";
   }
@@ -16,6 +20,16 @@ export function parseCommentCommand(body: string): SupportedCommand | null {
   }
 
   return null;
+}
+
+export function normalizeCommand(
+  command: SupportedCommand,
+): "/ai-review" | "/summary" | "/help" {
+  if (command === "/review") {
+    return "/ai-review";
+  }
+
+  return command;
 }
 
 export function getHelpComment() {
@@ -36,6 +50,7 @@ I’m ready to review this pull request.
 
 Available commands:
 - \`/ai-review\` — run full AI review
+- \`/review\` — alias for \`/ai-review\`
 - \`/summary\` — generate a short summary
 - \`/help\` — show available commands
 `.trim();
