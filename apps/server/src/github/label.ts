@@ -1,4 +1,4 @@
-const RISK_LABELS = ["ai-risk-low", "ai-risk-medium", "ai-risk-high"];
+import { RISK_LABELS } from "../utils/consts";
 
 export async function removeRiskLabels(
   repository: string,

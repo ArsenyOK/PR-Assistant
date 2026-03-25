@@ -1,24 +1,10 @@
 import { REVIEW_CONFIG } from "../config/review.config";
 import { PullRequestFile } from "../types";
-
-const IGNORED_FILE_NAMES = new Set([
-  "package-lock.json",
-  "pnpm-lock.yaml",
-  "yarn.lock",
-]);
-
-const IGNORED_PATH_PARTS = ["dist/", "build/", ".next/", "coverage/"];
-
-const IGNORED_EXTENSIONS = [
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".gif",
-  ".webp",
-  ".svg",
-  ".ico",
-  ".pdf",
-];
+import {
+  IGNORED_EXTENSIONS,
+  IGNORED_FILE_NAMES,
+  IGNORED_PATH_PARTS,
+} from "../utils/consts";
 
 function shouldIgnoreFile(file: PullRequestFile): boolean {
   const fileName = file.filename.toLowerCase();
