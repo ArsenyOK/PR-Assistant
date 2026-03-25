@@ -2,6 +2,7 @@ import { createOrUpdatePRReview } from "../github/comments";
 import { getInstallationToken } from "../github/installation";
 import { addRiskLabel, removeRiskLabels } from "../github/label";
 import { getPullRequestFiles } from "../github/pulls-files";
+import { logger } from "../utils/logger";
 import { addLabel, detectProjectType } from "../utils/utils";
 import {
   prepareFilesForReview,
@@ -55,8 +56,21 @@ export async function runPullRequestReview({
 
   const finalReview = `${review}\n\n${statsBlock}`;
 
-  await createOrUpdatePRReview(repository, prNumber, token, finalReview);
-  await addLabel(repository, prNumber, token, "ai-reviewed");
+  try {
+    await createOrUpdatePRReview(repository, prNumber, token, finalReview);
+  } catch (error) {
+    logger.error({ error, repository, prNumber }, "Failed to post PR review");
+    throw error;
+  }
+
+  try {
+    await addLabel(repository, prNumber, token, "ai-reviewed");
+  } catch (error) {
+    logger.warn(
+      { error, repository, prNumber },
+      "Review posted, but failed to add label",
+    );
+  }
 
   const riskLevel = parseRiskLevel(review);
 

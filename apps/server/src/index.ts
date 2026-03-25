@@ -38,7 +38,7 @@ app.post("/webhook/github", async (req, res) => {
       }
 
       const commentBody = req.body.comment?.body ?? "";
-      const rawCommand = parseCommentCommand(commentBody);
+      const rawCommand = parseCommentCommand(commentBody ?? null);
 
       if (!rawCommand) {
         return res.status(200).send("ok");
