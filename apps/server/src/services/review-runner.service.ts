@@ -58,18 +58,10 @@ export async function runPullRequestReview({
 
   try {
     await createOrUpdatePRReview(repository, prNumber, token, finalReview);
-  } catch (error) {
-    logger.error({ error, repository, prNumber }, "Failed to post PR review");
-    throw error;
-  }
-
-  try {
     await addLabel(repository, prNumber, token, "ai-reviewed");
   } catch (error) {
-    logger.warn(
-      { error, repository, prNumber },
-      "Review posted, but failed to add label",
-    );
+    logger.error({ error, repository, prNumber }, "Failed to publish review");
+    throw error;
   }
 
   const riskLevel = parseRiskLevel(review);
