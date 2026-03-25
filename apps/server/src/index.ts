@@ -5,6 +5,7 @@ import { addPullRequestComment } from "./github/comments";
 import {
   getHelpComment,
   getInitialPRComment,
+  normalizeCommand,
   parseCommentCommand,
 } from "./services/comment-command.service";
 import { runPullRequestReview } from "./services/review-runner.service";
@@ -37,11 +38,13 @@ app.post("/webhook/github", async (req, res) => {
       }
 
       const commentBody = req.body.comment?.body ?? "";
-      const command = parseCommentCommand(commentBody);
+      const rawCommand = parseCommentCommand(commentBody);
 
-      if (!command) {
+      if (!rawCommand) {
         return res.status(200).send("ok");
       }
+
+      const command = normalizeCommand(rawCommand);
 
       const repository = req.body.repository?.full_name;
       const prNumber = req.body.issue?.number;

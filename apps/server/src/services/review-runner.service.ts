@@ -9,6 +9,7 @@ import {
 } from "./diff-builder.service";
 import { buildReviewPrompt, generateReview } from "./pr-review.service";
 import { parseRiskLevel } from "./review-parser.service";
+import { buildReviewStatsBlock } from "./review-stats.service";
 
 type RunPullRequestReviewParams = {
   repository: string;
@@ -44,7 +45,17 @@ export async function runPullRequestReview({
 
   const review = await generateReview(prompt);
 
-  await createOrUpdatePRReview(repository, prNumber, token, review);
+  const statsBlock = buildReviewStatsBlock({
+    filesAnalyzed: usedFiles.length,
+    filesIgnored: ignoredFiles.length,
+    diffLength: diff.length,
+    truncatedFilesCount,
+    projectType,
+  });
+
+  const finalReview = `${review}\n\n${statsBlock}`;
+
+  await createOrUpdatePRReview(repository, prNumber, token, finalReview);
   await addLabel(repository, prNumber, token, "ai-reviewed");
 
   const riskLevel = parseRiskLevel(review);
