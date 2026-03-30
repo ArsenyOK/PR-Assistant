@@ -13,9 +13,13 @@ export async function getPullRequest(
     },
   );
 
+  const text = await response.text();
+
   if (!response.ok) {
-    throw new Error("Failed to fetch pull request");
+    throw new Error(
+      `Failed to get pull request: ${response.status} ${response.statusText}\n${text}`,
+    );
   }
 
-  return response.json();
+  return JSON.parse(text);
 }

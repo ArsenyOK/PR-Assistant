@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma";
+import { SaveReviewToDatabaseParams } from "../types";
 
 export async function getReviews() {
   return prisma.review.findMany({
@@ -29,62 +30,96 @@ export async function getReviewById(id: string) {
 }
 
 export async function saveReviewToDatabase({
+  githubInstallationId,
+  accountLogin,
+  accountType,
   repositoryFullName,
   githubRepoId,
   prNumber,
   title,
+  state,
+  branchName,
+  baseBranch,
   reviewMarkdown,
   summary,
   riskLevel,
   projectType,
   stats,
-}: any) {
+}: SaveReviewToDatabaseParams) {
+  console.log("Saving review to database...");
   const [owner, name] = repositoryFullName.split("/");
 
-  // 1. Installation / Repository
-  let repository = await prisma.repository.findUnique({
-    where: { githubRepoId },
+  const installation = await prisma.githubInstallation.upsert({
+    where: {
+      githubInstallationId,
+    },
+    update: {
+      accountLogin,
+      accountType,
+    },
+    create: {
+      githubInstallationId,
+      accountLogin,
+      accountType,
+    },
   });
 
-  if (!repository) {
-    repository = await prisma.repository.create({
-      data: {
-        githubRepoId,
-        fullName: repositoryFullName,
-        owner,
-        name,
-        installationId: "temp", // потом заменим на реальный installation
-      },
-    });
-  }
+  const repository = await prisma.repository.upsert({
+    where: {
+      githubRepoId,
+    },
+    update: {
+      fullName: repositoryFullName,
+      owner,
+      name,
+      installationId: installation.id,
+    },
+    create: {
+      githubRepoId,
+      fullName: repositoryFullName,
+      owner,
+      name,
+      installationId: installation.id,
+    },
+  });
 
-  // 2. Pull Request
-  let pullRequest = await prisma.pullRequest.findFirst({
+  const existingPullRequest = await prisma.pullRequest.findFirst({
     where: {
       githubPrNumber: prNumber,
       repositoryId: repository.id,
     },
   });
 
-  if (!pullRequest) {
-    pullRequest = await prisma.pullRequest.create({
-      data: {
-        githubPrNumber: prNumber,
-        title,
-        state: "open",
-        repositoryId: repository.id,
-      },
-    });
-  }
+  const pullRequest = existingPullRequest
+    ? await prisma.pullRequest.update({
+        where: {
+          id: existingPullRequest.id,
+        },
+        data: {
+          title,
+          state,
+          branchName,
+          baseBranch,
+        },
+      })
+    : await prisma.pullRequest.create({
+        data: {
+          githubPrNumber: prNumber,
+          title,
+          state,
+          branchName,
+          baseBranch,
+          repositoryId: repository.id,
+        },
+      });
 
-  // 3. Review
   const review = await prisma.review.create({
     data: {
       pullRequestId: pullRequest.id,
-      riskLevel,
-      summary,
+      riskLevel: riskLevel ?? "Unknown",
+      summary: summary ?? null,
       fullReviewMarkdown: reviewMarkdown,
-      projectType,
+      projectType: projectType ?? null,
       filesAnalyzed: stats.filesAnalyzed,
       filesIgnored: stats.filesIgnored,
       diffLength: stats.diffLength,
@@ -92,6 +127,8 @@ export async function saveReviewToDatabase({
       triggerType: "ai-review",
     },
   });
+
+  console.log("Review saved with id:", review.id);
 
   return review;
 }

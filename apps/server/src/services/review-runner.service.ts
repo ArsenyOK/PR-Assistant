@@ -82,12 +82,18 @@ export async function runPullRequestReview({
   const summary = extractSummaryFromReview(review);
 
   await saveReviewToDatabase({
+    githubInstallationId: installationId,
+    accountLogin: pr.base.repo.owner.login,
+    accountType: pr.base.repo.owner.type,
     repositoryFullName: repository,
     githubRepoId: pr.base.repo.id,
-    prNumber: prNumber,
+    prNumber,
     title: pr.title,
+    state: pr.state,
+    branchName: pr.head?.ref,
+    baseBranch: pr.base?.ref,
     reviewMarkdown: finalReview,
-    summary,
+    summary: extractSummaryFromReview(review),
     riskLevel,
     projectType,
     stats: {

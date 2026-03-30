@@ -45,3 +45,26 @@ export type Review = {
   potentialIssues?: string[];
   stats?: ReviewStats;
 };
+
+export type SaveReviewToDatabaseParams = {
+  githubInstallationId: number;
+  accountLogin: string;
+  accountType: string;
+  repositoryFullName: string;
+  githubRepoId: number;
+  prNumber: number;
+  title: string;
+  state: string;
+  branchName?: string;
+  baseBranch?: string;
+  reviewMarkdown: string;
+  summary?: string | null;
+  riskLevel?: string | null;
+  projectType?: string | null;
+  stats: {
+    filesAnalyzed: number;
+    filesIgnored: number;
+    diffLength: number;
+    truncatedFiles: number;
+  };
+};
