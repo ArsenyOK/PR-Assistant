@@ -7,10 +7,12 @@ import { Review } from "../types";
 import { getReviews } from "../lib/api";
 import DashboardLoadingState from "../components/dashboard/dashboard-loading-state";
 import DashboardEmptyState from "../components/dashboard/dashboard-empty-state";
+import DashboardErrorState from "../components/dashboard/dashboard-error-state";
 
 const DashboardPage = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadReviews() {
@@ -19,6 +21,9 @@ const DashboardPage = () => {
       try {
         const data = await getReviews();
         setReviews(data);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load reviews");
       } finally {
         setIsLoading(false);
       }
@@ -94,6 +99,8 @@ const DashboardPage = () => {
 
           {isLoading ? (
             <DashboardLoadingState />
+          ) : error ? (
+            <DashboardErrorState message={error} />
           ) : reviews.length === 0 ? (
             <DashboardEmptyState />
           ) : (

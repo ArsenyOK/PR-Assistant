@@ -1,4 +1,5 @@
 import "dotenv/config";
+import cors from "cors";
 import express from "express";
 import { getInstallationToken } from "./github/installation";
 import { addPullRequestComment } from "./github/comments";
@@ -10,11 +11,19 @@ import {
 } from "./services/comment-command.service";
 import { runPullRequestReview } from "./services/review-runner.service";
 import { CUSTOM_RULES } from "./utils/consts";
+import { reviewsRouter } from "./routes/reviews.routes";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
 
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+  }),
+);
 app.use(express.json());
+
+app.use("/api/reviews", reviewsRouter);
 
 app.get("/", (_req, res) => {
   res.json({ ok: true, service: "server" });
