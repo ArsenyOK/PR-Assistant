@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model GithubInstallation {
+  id                   String   @id @default(cuid())
+  githubInstallationId Int      @unique
+  accountLogin         String
+  accountType          String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  repositories Repository[]
+}
+
+model Repository {
+  id             String   @id @default(cuid())
+  githubRepoId   Int      @unique
+  fullName       String
+  owner          String
+  name           String
+  installationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  installation GithubInstallation @relation(fields: [installationId], references: [id])
+  pullRequests PullRequest[]
+}
+
+model PullRequest {
+  id             String   @id @default(cuid())
+  githubPrNumber Int
+  title          String
+  state          String
+  branchName     String?
+  baseBranch     String?
+  repositoryId   String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  repository Repository @relation(fields: [repositoryId], references: [id])
+  reviews    Review[]
+}
+
+model Review {
+  id                 String   @id @default(cuid())
+  pullRequestId      String
+  riskLevel          String
+  summary            String?
+  fullReviewMarkdown String?
+  projectType        String?
+  filesAnalyzed      Int?
+  filesIgnored       Int?
+  diffLength         Int?
+  truncatedFiles     Int?
+  triggerType        String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  pullRequest PullRequest @relation(fields: [pullRequestId], references: [id])
+}

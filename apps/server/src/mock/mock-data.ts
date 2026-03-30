@@ -5,7 +5,7 @@ export const mockReviews: Review[] = [
     id: "1",
     repository: "ArsenyOK/PR-Assistant",
     title: "Add AI review command path",
-    risk: "Medium",
+    risk: "medium",
     updatedAt: "2 min ago",
     filesAnalyzed: 6,
     summary:
@@ -29,7 +29,7 @@ export const mockReviews: Review[] = [
     id: "2",
     repository: "ArsenyOK/PR-Assistant",
     title: "Improve review stats output",
-    risk: "Low",
+    risk: "low",
     updatedAt: "15 min ago",
     filesAnalyzed: 4,
     summary:
@@ -49,7 +49,7 @@ export const mockReviews: Review[] = [
     id: "3",
     repository: "ArsenyOK/PR-Assistant",
     title: "Parse risk level from AI output",
-    risk: "High",
+    risk: "high",
     updatedAt: "1 hour ago",
     filesAnalyzed: 8,
     summary:

@@ -24,7 +24,7 @@ export type ReviewStatsInput = {
 };
 
 export type SupportedCommand = "/review" | "/ai-review" | "/summary" | "/help";
-export type RiskLevel = "Low" | "Medium" | "High";
+export type RiskLevel = "low" | "medium" | "high";
 
 export type ReviewStats = {
   filesIgnored: number;

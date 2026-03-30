@@ -51,3 +51,11 @@ export function detectProjectType(
   if (hasBackend) return "backend";
   return "unknown";
 }
+
+export function extractSummaryFromReview(review: string) {
+  const match = review.match(/## Summary([\s\S]*?)##/);
+
+  if (!match) return null;
+
+  return match[1].trim();
+}
