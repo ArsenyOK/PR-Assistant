@@ -60,6 +60,7 @@ export function InstallPage() {
             <a
               href="https://github.com/"
               target="_blank"
+              rel="noreferrer noopener"
               className="inline-flex rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
             >
               Install GitHub App
