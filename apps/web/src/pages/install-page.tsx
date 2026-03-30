@@ -59,7 +59,7 @@ export function InstallPage() {
           <div className="mt-8">
             <a
               href="https://github.com/"
-              rel="_blank"
+              target="_blank"
               className="inline-flex rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
             >
               Install GitHub App

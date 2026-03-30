@@ -37,6 +37,13 @@ const LandingPage = () => {
             >
               See features
             </a>
+
+            <Link
+              to="/dashboard"
+              className="rounded-xl border border-slate-700 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-900"
+            >
+              Open dashboard
+            </Link>
           </div>
 
           <div className="mt-10 flex flex-wrap gap-6 text-sm text-slate-400">
