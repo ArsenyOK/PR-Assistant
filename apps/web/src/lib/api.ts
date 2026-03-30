@@ -1,18 +1,27 @@
 import { Review } from "../types";
-import { mockReviews } from "../utils/mock-data";
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3001";
 
 export async function getReviews(): Promise<Review[]> {
-  await wait(500);
-  return mockReviews;
+  const response = await fetch(`${API_BASE_URL}/api/reviews`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch reviews");
+  }
+
+  return response.json();
 }
 
 export async function getReviewById(id: string): Promise<Review | null> {
-  await wait(400);
+  const response = await fetch(`${API_BASE_URL}/api/reviews/${id}`);
 
-  const review = mockReviews.find((item) => item.id === id);
-  return review ?? null;
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch review");
+  }
+
+  return response.json();
 }

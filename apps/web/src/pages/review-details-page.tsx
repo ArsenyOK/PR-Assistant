@@ -5,15 +5,18 @@ import { Review } from "../types";
 import AppHeader from "../components/layout/app-header";
 import PageContainer from "../components/layout/page-container";
 import RiskBadge from "../components/dashboard/risk-badge";
+import ReviewDetailsErrorState from "../components/dashboard/review-details-error-state";
 
 const ReviewDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const [review, setReview] = useState<Review | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadReview() {
       if (!id) {
+        setError("Missing review id");
         setIsLoading(false);
         return;
       }
@@ -23,6 +26,9 @@ const ReviewDetailsPage = () => {
       try {
         const data = await getReviewById(id);
         setReview(data);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load review");
       } finally {
         setIsLoading(false);
       }
@@ -52,6 +58,8 @@ const ReviewDetailsPage = () => {
             <div className="mt-6 h-4 w-full animate-pulse rounded bg-slate-800" />
             <div className="mt-2 h-4 w-4/5 animate-pulse rounded bg-slate-800" />
           </div>
+        ) : error ? (
+          <ReviewDetailsErrorState message={error} />
         ) : !review ? (
           <div className="rounded-3xl border border-dashed border-slate-800 bg-slate-900/40 p-10 text-center">
             <h1 className="text-xl font-semibold text-white">

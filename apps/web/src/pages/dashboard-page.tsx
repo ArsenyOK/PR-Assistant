@@ -7,10 +7,12 @@ import { Review } from "../types";
 import { getReviews } from "../lib/api";
 import DashboardLoadingState from "../components/dashboard/dashboard-loading-state";
 import DashboardEmptyState from "../components/dashboard/dashboard-empty-state";
+import DashboardErrorState from "../components/dashboard/dashboard-error-state";
 
 const DashboardPage = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadReviews() {
@@ -19,6 +21,9 @@ const DashboardPage = () => {
       try {
         const data = await getReviews();
         setReviews(data);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load reviews");
       } finally {
         setIsLoading(false);
       }
@@ -38,6 +43,10 @@ const DashboardPage = () => {
     () => reviews.filter((review) => review.risk === "Medium").length,
     [reviews],
   );
+
+  const repositoriesCount = useMemo(() => {
+    return new Set(reviews.map((review) => review.repository)).size;
+  }, [reviews]);
 
   return (
     <PageContainer>
@@ -75,7 +84,7 @@ const DashboardPage = () => {
           />
           <DashboardStatCard
             label="Repositories"
-            value="1"
+            value={String(repositoriesCount)}
             description="Repositories currently connected to MergeAssistant."
           />
         </div>
@@ -94,6 +103,8 @@ const DashboardPage = () => {
 
           {isLoading ? (
             <DashboardLoadingState />
+          ) : error ? (
+            <DashboardErrorState message={error} />
           ) : reviews.length === 0 ? (
             <DashboardEmptyState />
           ) : (
