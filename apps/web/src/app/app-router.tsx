@@ -7,13 +7,16 @@ export const AppRouter = createBrowserRouter([
   {
     path: "/",
     element: <LandingPage />,
+    errorElement: <div>Something went wrong loading this page.</div>,
   },
   {
     path: "/install",
     element: <InstallPage />,
+    errorElement: <div>Something went wrong loading this page.</div>,
   },
   {
     path: "/dashboard",
     element: <DashboardPage />,
+    errorElement: <div>Something went wrong loading this page.</div>,
   },
 ]);
