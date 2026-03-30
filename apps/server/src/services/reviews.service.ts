@@ -1,8 +1,53 @@
 import { prisma } from "../lib/prisma";
 import { SaveReviewToDatabaseParams } from "../types";
 
+function extractSection(
+  markdown: string | null | undefined,
+  sectionTitle: string,
+): string[] {
+  if (!markdown) return [];
+
+  const escapedTitle = sectionTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(
+    `### ${escapedTitle}\\s*([\\s\\S]*?)(?=\\n### |$)`,
+    "i",
+  );
+  const match = markdown.match(regex);
+
+  if (!match) return [];
+
+  return match[1]
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("- "))
+    .map((line) => line.replace(/^- /, "").trim());
+}
+
+function mapReviewToDto(review: any) {
+  return {
+    id: review.id,
+    repository: review.pullRequest.repository.fullName,
+    title: review.pullRequest.title,
+    risk: review.riskLevel,
+    updatedAt: review.updatedAt,
+    filesAnalyzed: review.filesAnalyzed ?? 0,
+    summary: review.summary ?? "",
+    potentialIssues: extractSection(
+      review.fullReviewMarkdown,
+      "Potential issues",
+    ),
+    suggestions: extractSection(review.fullReviewMarkdown, "Suggestions"),
+    stats: {
+      filesIgnored: review.filesIgnored ?? 0,
+      diffLength: review.diffLength ?? 0,
+      truncatedFilesCount: review.truncatedFiles ?? 0,
+      projectType: review.projectType ?? "unknown",
+    },
+  };
+}
+
 export async function getReviews() {
-  return prisma.review.findMany({
+  const reviews = await prisma.review.findMany({
     include: {
       pullRequest: {
         include: {
@@ -14,10 +59,12 @@ export async function getReviews() {
       createdAt: "desc",
     },
   });
+
+  return reviews.map(mapReviewToDto);
 }
 
 export async function getReviewById(id: string) {
-  return prisma.review.findUnique({
+  const review = await prisma.review.findUnique({
     where: { id },
     include: {
       pullRequest: {
@@ -27,6 +74,12 @@ export async function getReviewById(id: string) {
       },
     },
   });
+
+  if (!review) {
+    return null;
+  }
+
+  return mapReviewToDto(review);
 }
 
 export async function saveReviewToDatabase({
