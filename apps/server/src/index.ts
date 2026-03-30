@@ -18,7 +18,7 @@ const PORT = Number(process.env.PORT) || 3001;
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [process.env.WEB_ORIGIN ?? "http://localhost:5173"],
   }),
 );
 app.use(express.json());
