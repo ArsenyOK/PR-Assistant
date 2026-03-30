@@ -1,9 +1,14 @@
 import { createOrUpdatePRReview } from "../github/comments";
 import { getInstallationToken } from "../github/installation";
 import { addRiskLabel, removeRiskLabels } from "../github/label";
+import { getPullRequest } from "../github/pull-requests";
 import { getPullRequestFiles } from "../github/pulls-files";
 import { logger } from "../utils/logger";
-import { addLabel, detectProjectType } from "../utils/utils";
+import {
+  addLabel,
+  detectProjectType,
+  extractSummaryFromReview,
+} from "../utils/utils";
 import {
   prepareFilesForReview,
   buildDiffFromFiles,
@@ -11,6 +16,7 @@ import {
 import { buildReviewPrompt, generateReview } from "./pr-review.service";
 import { parseRiskLevel } from "./review-parser.service";
 import { buildReviewStatsBlock } from "./review-stats.service";
+import { saveReviewToDatabase } from "./reviews.service";
 
 type RunPullRequestReviewParams = {
   repository: string;
@@ -26,6 +32,8 @@ export async function runPullRequestReview({
   customRules,
 }: RunPullRequestReviewParams) {
   const token = await getInstallationToken(installationId);
+
+  const pr = await getPullRequest(repository, prNumber, token);
 
   const files = await getPullRequestFiles(repository, prNumber, token);
 
@@ -70,6 +78,31 @@ export async function runPullRequestReview({
     await removeRiskLabels(repository, prNumber, token);
     await addRiskLabel(repository, prNumber, token, riskLevel);
   }
+
+  const summary = extractSummaryFromReview(review);
+
+  await saveReviewToDatabase({
+    githubInstallationId: installationId,
+    accountLogin: pr.base.repo.owner.login,
+    accountType: pr.base.repo.owner.type,
+    repositoryFullName: repository,
+    githubRepoId: pr.base.repo.id,
+    prNumber,
+    title: pr.title,
+    state: pr.state,
+    branchName: pr.head?.ref,
+    baseBranch: pr.base?.ref,
+    reviewMarkdown: finalReview,
+    summary: extractSummaryFromReview(review),
+    riskLevel,
+    projectType,
+    stats: {
+      filesAnalyzed: usedFiles.length,
+      filesIgnored: ignoredFiles.length,
+      diffLength: diff.length,
+      truncatedFiles: truncatedFilesCount,
+    },
+  });
 
   return {
     review,

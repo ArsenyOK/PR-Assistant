@@ -24,7 +24,7 @@ export type ReviewStatsInput = {
 };
 
 export type SupportedCommand = "/review" | "/ai-review" | "/summary" | "/help";
-export type RiskLevel = "Low" | "Medium" | "High";
+export type RiskLevel = "low" | "medium" | "high";
 
 export type ReviewStats = {
   filesIgnored: number;
@@ -44,4 +44,27 @@ export type Review = {
   suggestions?: string[];
   potentialIssues?: string[];
   stats?: ReviewStats;
+};
+
+export type SaveReviewToDatabaseParams = {
+  githubInstallationId: number;
+  accountLogin: string;
+  accountType: string;
+  repositoryFullName: string;
+  githubRepoId: number;
+  prNumber: number;
+  title: string;
+  state: string;
+  branchName?: string;
+  baseBranch?: string;
+  reviewMarkdown: string;
+  summary?: string | null;
+  riskLevel?: string | null;
+  projectType?: string | null;
+  stats: {
+    filesAnalyzed: number;
+    filesIgnored: number;
+    diffLength: number;
+    truncatedFiles: number;
+  };
 };
