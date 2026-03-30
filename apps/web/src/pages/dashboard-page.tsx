@@ -1,17 +1,43 @@
+import { useEffect, useMemo, useState } from "react";
 import DashboardStatCard from "../components/dashboard/dashboard-stat-card";
 import ReviewCard from "../components/dashboard/review-card";
 import AppHeader from "../components/layout/app-header";
 import PageContainer from "../components/layout/page-container";
-import { mockReviews } from "../utils/mockData";
+import { Review } from "../types";
+import { getReviews } from "../lib/api";
+import DashboardLoadingState from "../components/dashboard/dashboard-loading-state";
+import DashboardEmptyState from "../components/dashboard/dashboard-empty-state";
 
 const DashboardPage = () => {
-  const totalReviews = mockReviews.length;
-  const highRiskCount = mockReviews.filter(
-    (review) => review.risk === "High",
-  ).length;
-  const mediumRiskCount = mockReviews.filter(
-    (review) => review.risk === "Medium",
-  ).length;
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadReviews() {
+      setIsLoading(true);
+
+      try {
+        const data = await getReviews();
+        setReviews(data);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    void loadReviews();
+  }, []);
+
+  const totalReviews = reviews.length;
+
+  const highRiskCount = useMemo(
+    () => reviews.filter((review) => review.risk === "High").length,
+    [reviews],
+  );
+
+  const mediumRiskCount = useMemo(
+    () => reviews.filter((review) => review.risk === "Medium").length,
+    [reviews],
+  );
 
   return (
     <PageContainer>
@@ -66,11 +92,17 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          <div className="grid gap-4">
-            {mockReviews.map((review) => (
-              <ReviewCard key={review.id} review={review} />
-            ))}
-          </div>
+          {isLoading ? (
+            <DashboardLoadingState />
+          ) : reviews.length === 0 ? (
+            <DashboardEmptyState />
+          ) : (
+            <div className="grid gap-4">
+              {reviews.map((review) => (
+                <ReviewCard key={review.id} review={review} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </PageContainer>
