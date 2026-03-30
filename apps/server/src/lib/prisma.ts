@@ -1,3 +1,17 @@
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 
-export const prisma = new PrismaClient();
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("Missing DATABASE_URL");
+}
+
+const adapter = new PrismaPg({
+  connectionString,
+});
+
+export const prisma = new PrismaClient({
+  adapter,
+});
