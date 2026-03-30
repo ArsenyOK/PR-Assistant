@@ -44,6 +44,10 @@ const DashboardPage = () => {
     [reviews],
   );
 
+  const repositoriesCount = useMemo(() => {
+    return new Set(reviews.map((review) => review.repository)).size;
+  }, [reviews]);
+
   return (
     <PageContainer>
       <AppHeader />
@@ -80,7 +84,7 @@ const DashboardPage = () => {
           />
           <DashboardStatCard
             label="Repositories"
-            value="1"
+            value={String(repositoriesCount)}
             description="Repositories currently connected to MergeAssistant."
           />
         </div>

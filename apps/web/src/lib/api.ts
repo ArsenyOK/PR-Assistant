@@ -1,5 +1,4 @@
 import { Review } from "../types";
-// import { mockReviews } from "../utils/mock-data";
 
 const API_BASE_URL = "http://localhost:3001";
 
