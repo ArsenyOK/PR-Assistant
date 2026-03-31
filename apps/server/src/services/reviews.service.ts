@@ -47,12 +47,28 @@ function mapReviewToDto(review: any) {
   };
 }
 
-export async function getReviews() {
+export async function getReviews(installationId?: number) {
   const reviews = await prisma.review.findMany({
+    where: installationId
+      ? {
+          pullRequest: {
+            repository: {
+              installation: {
+                githubInstallationId: installationId,
+                isActive: true,
+              },
+            },
+          },
+        }
+      : undefined,
     include: {
       pullRequest: {
         include: {
-          repository: true,
+          repository: {
+            include: {
+              installation: true,
+            },
+          },
         },
       },
     },
@@ -64,13 +80,31 @@ export async function getReviews() {
   return reviews.map(mapReviewToDto);
 }
 
-export async function getReviewById(id: string) {
-  const review = await prisma.review.findUnique({
-    where: { id },
+export async function getReviewById(id: string, installationId?: number) {
+  const review = await prisma.review.findFirst({
+    where: {
+      id,
+      ...(installationId
+        ? {
+            pullRequest: {
+              repository: {
+                installation: {
+                  githubInstallationId: installationId,
+                  isActive: true,
+                },
+              },
+            },
+          }
+        : {}),
+    },
     include: {
       pullRequest: {
         include: {
-          repository: true,
+          repository: {
+            include: {
+              installation: true,
+            },
+          },
         },
       },
     },

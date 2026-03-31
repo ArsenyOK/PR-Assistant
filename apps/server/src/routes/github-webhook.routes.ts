@@ -9,12 +9,52 @@ import { getInstallationToken } from "../github/installation";
 import { addPullRequestComment } from "../github/comments";
 import { runPullRequestReview } from "../services/review-runner.service";
 import { CUSTOM_RULES } from "../utils/consts";
+import {
+  deleteInstallationByGithubId,
+  saveInstallation,
+} from "../services/installation.service";
 
 export const githubWebhookRouter = Router();
 
 githubWebhookRouter.post("/", async (req, res) => {
   try {
     const event = req.headers["x-github-event"];
+
+    if (event === "installation") {
+      const action = req.body.action;
+      const installation = req.body.installation;
+      const account = installation?.account;
+
+      if (!installation?.id || !account?.login || !account?.type) {
+        console.error("Invalid installation payload");
+        return res.status(400).send("Invalid installation payload");
+      }
+
+      if (action === "created") {
+        const savedInstallation = await saveInstallation({
+          githubInstallationId: installation.id,
+          accountLogin: account.login,
+          accountType: account.type,
+        });
+
+        console.log(
+          "Installation saved:",
+          savedInstallation.githubInstallationId,
+        );
+
+        return res.status(200).send("ok");
+      }
+
+      if (action === "deleted") {
+        await deleteInstallationByGithubId(installation.id);
+
+        console.log("Installation deleted:", installation.id);
+
+        return res.status(200).send("ok");
+      }
+
+      return res.status(200).send("ok");
+    }
 
     if (event === "issue_comment") {
       const authorType = req.body.comment?.user?.type;
