@@ -11,6 +11,8 @@ model GithubInstallation {
   githubInstallationId Int      @unique
   accountLogin         String
   accountType          String
+  isActive             Boolean  @default(true)
+  deletedAt            DateTime?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 

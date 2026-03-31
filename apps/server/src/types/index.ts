@@ -68,3 +68,9 @@ export type SaveReviewToDatabaseParams = {
     truncatedFiles: number;
   };
 };
+
+export type SaveInstallationParams = {
+  githubInstallationId: number;
+  accountLogin: string;
+  accountType: string;
+};

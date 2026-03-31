@@ -3,9 +3,18 @@ import { getReviewById, getReviews } from "../services/reviews.service";
 
 export const reviewsRouter = Router();
 
-reviewsRouter.get("/", async (_req, res) => {
+reviewsRouter.get("/", async (req, res) => {
   try {
-    const reviews = await getReviews();
+    const installationIdParam = req.query.installationId;
+    const installationId =
+      typeof installationIdParam === "string"
+        ? Number(installationIdParam)
+        : undefined;
+
+    const reviews = await getReviews(
+      Number.isFinite(installationId) ? installationId : undefined,
+    );
+
     return res.json(reviews);
   } catch (error) {
     console.error("Failed to fetch reviews", error);
@@ -15,7 +24,16 @@ reviewsRouter.get("/", async (_req, res) => {
 
 reviewsRouter.get("/:id", async (req, res) => {
   try {
-    const review = await getReviewById(req.params.id);
+    const installationIdParam = req.query.installationId;
+    const installationId =
+      typeof installationIdParam === "string"
+        ? Number(installationIdParam)
+        : undefined;
+
+    const review = await getReviewById(
+      req.params.id,
+      Number.isFinite(installationId) ? installationId : undefined,
+    );
 
     if (!review) {
       return res.status(404).json({ message: "Review not found" });
