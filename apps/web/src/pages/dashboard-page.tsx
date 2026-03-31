@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import DashboardStatCard from "../components/dashboard/dashboard-stat-card";
 import ReviewCard from "../components/dashboard/review-card";
 import AppHeader from "../components/layout/app-header";
@@ -14,22 +14,22 @@ const DashboardPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadReviews() {
-      setIsLoading(true);
+  const loadReviewDashboard = useCallback(async () => {
+    setIsLoading(true);
 
-      try {
-        const data = await getReviews();
-        setReviews(data);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load reviews");
-      } finally {
-        setIsLoading(false);
-      }
+    try {
+      const data = await getReviews();
+      setReviews(data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load reviews");
+    } finally {
+      setIsLoading(false);
     }
+  }, []);
 
-    void loadReviews();
+  useEffect(() => {
+    loadReviewDashboard();
   }, []);
 
   const totalReviews = reviews.length;
