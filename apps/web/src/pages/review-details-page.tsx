@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getReviewById } from "../lib/api";
 import { Review } from "../types";
@@ -13,29 +13,29 @@ const ReviewDetailsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadReview() {
-      if (!id) {
-        setError("Missing review id");
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-
-      try {
-        const data = await getReviewById(id);
-        setReview(data);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load review");
-      } finally {
-        setIsLoading(false);
-      }
+  const loadReviewDetails = useCallback(async () => {
+    if (!id) {
+      setError("Missing review id");
+      setIsLoading(false);
+      return;
     }
 
-    void loadReview();
+    setIsLoading(true);
+
+    try {
+      const data = await getReviewById(id);
+      setReview(data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load review");
+    } finally {
+      setIsLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    loadReviewDetails();
+  }, [loadReviewDetails]);
 
   return (
     <PageContainer>

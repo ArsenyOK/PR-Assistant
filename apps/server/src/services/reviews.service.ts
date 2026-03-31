@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { SaveReviewToDatabaseParams } from "../types";
+import { normalizeRiskLevel } from "../utils/utils";
 
 function extractSection(
   markdown: string | null | undefined,
@@ -28,7 +29,7 @@ function mapReviewToDto(review: any) {
     id: review.id,
     repository: review.pullRequest.repository.fullName,
     title: review.pullRequest.title,
-    risk: review.riskLevel,
+    risk: normalizeRiskLevel(review.riskLevel),
     updatedAt: review.updatedAt,
     filesAnalyzed: review.filesAnalyzed ?? 0,
     summary: review.summary ?? "",
