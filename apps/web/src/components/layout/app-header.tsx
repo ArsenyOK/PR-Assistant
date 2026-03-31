@@ -1,4 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
+import { GITHUB_APP_INSTALL_URL } from "../../lib/consts";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
@@ -39,12 +40,14 @@ const AppHeader = () => {
           </NavLink>
         </nav>
 
-        <Link
-          to="/install"
+        <a
+          href={GITHUB_APP_INSTALL_URL}
+          target="_blank"
+          rel="noreferrer"
           className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-900"
         >
           Install GitHub App
-        </Link>
+        </a>
       </div>
     </header>
   );

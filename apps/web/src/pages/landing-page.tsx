@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import AppHeader from "../components/layout/app-header";
 import PageContainer from "../components/layout/page-container";
+import { GITHUB_APP_INSTALL_URL } from "../lib/consts";
 
 const LandingPage = () => {
   return (
@@ -24,12 +25,14 @@ const LandingPage = () => {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
-            <Link
-              to="/install"
+            <a
+              href={GITHUB_APP_INSTALL_URL}
+              target="_blank"
+              rel="noreferrer"
               className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
             >
               Install GitHub App
-            </Link>
+            </a>
 
             <a
               href="#features"

@@ -1,5 +1,6 @@
 import AppHeader from "../components/layout/app-header";
 import PageContainer from "../components/layout/page-container";
+import { GITHUB_APP_INSTALL_URL } from "../lib/consts";
 
 export function InstallPage() {
   return (
@@ -58,7 +59,7 @@ export function InstallPage() {
 
           <div className="mt-8">
             <a
-              href="https://github.com/apps/mergeassistant"
+              href={GITHUB_APP_INSTALL_URL}
               target="_blank"
               rel="noreferrer noopener"
               className="inline-flex rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"

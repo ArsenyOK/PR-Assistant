@@ -30,7 +30,7 @@ const DashboardPage = () => {
 
   useEffect(() => {
     loadReviewDashboard();
-  }, []);
+  }, [loadReviewDashboard]);
 
   const totalReviews = reviews.length;
 
