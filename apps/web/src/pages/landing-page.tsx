@@ -28,7 +28,7 @@ const LandingPage = () => {
             <a
               href={GITHUB_APP_INSTALL_URL}
               target="_blank"
-              rel="noreferrer"
+              rel="noreferrer noopener"
               className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
             >
               Install GitHub App

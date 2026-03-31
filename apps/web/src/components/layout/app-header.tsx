@@ -43,7 +43,7 @@ const AppHeader = () => {
         <a
           href={GITHUB_APP_INSTALL_URL}
           target="_blank"
-          rel="noreferrer"
+          rel="noreferrer noopener"
           className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-900"
         >
           Install GitHub App
