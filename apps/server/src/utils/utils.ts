@@ -59,3 +59,13 @@ export function extractSummaryFromReview(review: string) {
 
   return match[1].trim();
 }
+
+export function normalizeRiskLevel(value: string | null | undefined) {
+  if (!value) return "Low";
+
+  const normalized = value.toLowerCase();
+
+  if (normalized === "high") return "High";
+  if (normalized === "medium") return "Medium";
+  return "Low";
+}
