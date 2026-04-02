@@ -9,7 +9,8 @@ const PORT = Number(process.env.PORT) || 3001;
 
 app.use(
   cors({
-    origin: [process.env.WEB_ORIGIN ?? "http://localhost:5173"],
+    origin: ["https://pr-assistant-obok.onrender.com", "http://localhost:5173"],
+    credentials: true,
   }),
 );
 app.use(express.json());
