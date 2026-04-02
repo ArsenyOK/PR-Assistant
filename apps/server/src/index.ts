@@ -9,7 +9,11 @@ const PORT = Number(process.env.PORT) || 3001;
 
 app.use(
   cors({
-    origin: ["https://pr-assistant-obok.onrender.com", "http://localhost:5173"],
+    origin: [
+      "https://pr-assistant-obok.onrender.com",
+      "http://localhost:5173",
+      "https://pr-assistant-web.vercel.app",
+    ],
     credentials: true,
   }),
 );
