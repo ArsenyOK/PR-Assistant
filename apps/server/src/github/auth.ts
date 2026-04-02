@@ -11,7 +11,7 @@ export const generateAppJwt = () => {
   }
 
   if (!privateKey) {
-    throw new Error("Missing GITHUB_PRIVATE in environment variables");
+    throw new Error("Missing GITHUB_PRIVATE_KEY in environment variables");
   }
 
   const now = Math.floor(Date.now() / 1000);
