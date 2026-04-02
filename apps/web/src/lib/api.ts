@@ -1,12 +1,13 @@
 import { Review } from "../types";
 
-const API_BASE_URL = "http://localhost:3001";
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const INSTALLATION_ID = 118671167;
+const INSTALLATION_ID = 120397789;
 
 export async function getReviews(): Promise<Review[]> {
+  console.info(VITE_API_BASE_URL, "API_BASE_URL");
   const response = await fetch(
-    `${API_BASE_URL}/api/reviews?installationId=${INSTALLATION_ID}`,
+    `${VITE_API_BASE_URL}/api/reviews?installationId=${INSTALLATION_ID}`,
   );
 
   if (!response.ok) {
@@ -18,7 +19,7 @@ export async function getReviews(): Promise<Review[]> {
 
 export async function getReviewById(id: string): Promise<Review | null> {
   const response = await fetch(
-    `${API_BASE_URL}/api/reviews/${id}?installationId=${INSTALLATION_ID}`,
+    `${VITE_API_BASE_URL}/api/reviews/${id}?installationId=${INSTALLATION_ID}`,
   );
 
   if (response.status === 404) {
